@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpletimeservice
+  labels:
+    app: simpletimeservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simpletimeservice
+  template:
+    metadata:
+      labels:
+        app: simpletimeservice
+    spec:
+      containers:
+        - name: simpletimeservice
+          image: docker.io/riyaamudgal/simpletimeservice:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 8
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simpletimeservice
+  labels:
+    app: simpletimeservice
+spec:
+  type: ClusterIP
+  selector:
+    app: simpletimeservice
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
